@@ -3,7 +3,16 @@
 # createtime:   2018/4/5 19:17
 # software:     PyCharm
 
+import os
+#全局配置
+INSTANCE_PATH = os.path.abspath(os.path.dirname(__file__))
 
+#log
+LOG_PATH = os.path.join(INSTANCE_PATH, 'log')
+LOG_FILE = os.path.join(LOG_PATH, 'mock.log')
+
+
+#csrf
 SECRET_KEY="dfdlkeeekj34234"
 
 # database 配置
@@ -19,3 +28,5 @@ SQLALCHEMY_DATABASE_URI = 'mysql://' + DATABASE_USER + ':' + DATABASE_PWD + '@' 
 SQLALCHEMY_ECHO = False
 SQLALCHEMY_POOL_RECYCLE = 3600
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+del os
