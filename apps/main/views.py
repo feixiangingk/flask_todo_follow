@@ -2,17 +2,16 @@
 # author:       lenovo
 # createtime:   2018/4/5 18:32
 # software:     PyCharm
-import sys
-reload(sys)
-sys.setdefaultencoding("utf-8")
+
+from __future__ import unicode_literals
 import time
 from datetime import datetime
 import pymysql
 from .import main
 from flask import render_template,g,url_for,redirect,request,session,flash,abort
-from flask_sqlalchemy import SQLAlchemy
+from forms import TodoListForm
 from flask import current_app
-db=SQLAlchemy()
+
 
 def connect_db():
     return pymysql.connect(host='127.0.0.1',
@@ -38,23 +37,29 @@ def af_request(response):
 def show_todo_list():
     if not session.has_key('logged_in') or session['logged_in']==False:
         return redirect(url_for('main.login',title=u'登录页'))
+
+    todoListform=TodoListForm()
     if request.method=='GET':
         with g.db as cur:
             sql="select * from todolist;"
             cur.execute(sql)
             todo_list = [dict(id=row[0], user_id=row[1], title=row[2], status=row[3], create_time=row[4]) for row in
                          cur.fetchall()]
-            return render_template("index_follow.html", todo_list=todo_list, title=u"首页")
+            return render_template("index_follow.html", todo_list=todo_list,form=todoListform, title=u"首页")
+
     elif request.method=='POST':
-        title=request.form['title']
-        status=request.form['status']
-        with g.db as cur:
-            sql='''insert into todolist (`user_id`, `title`, `status`, `create_time`) VALUES''' \
-                ''' ({user_id},"{title}","{status}",{create_time});'''.format(user_id=1,title=title,status=status,create_time=int(time.time()))
-            cur.execute(sql)
-            current_app.logger.debug(sql)
-            flash(u'记录新增成功！')
-            return redirect(url_for('main.show_todo_list'))
+        if todoListform.validate_on_submit():
+            title=request.form['title']
+            status=request.form['status']
+            with g.db as cur:
+                sql='''insert into todolist (`user_id`, `title`, `status`, `create_time`) VALUES''' \
+                    ''' ({user_id},"{title}","{status}",{create_time});'''.format(user_id=1,title=title,status=status,create_time=int(time.time()))
+                cur.execute(sql)
+                current_app.logger.debug(sql)
+                flash('记录新增成功！')
+        else:
+            flash(todoListform.errors)
+        return redirect(url_for('main.show_todo_list'))
 
 @main.route("/delete",methods=['GET'])
 def delete():
