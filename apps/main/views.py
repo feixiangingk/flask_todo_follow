@@ -6,9 +6,10 @@ import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 import time
+from datetime import datetime
 import pymysql
 from .import main
-from flask import render_template,g,url_for,redirect,request,session,flash
+from flask import render_template,g,url_for,redirect,request,session,flash,abort
 from flask_sqlalchemy import SQLAlchemy
 from flask import current_app
 db=SQLAlchemy()
@@ -35,7 +36,7 @@ def af_request(response):
 
 @main.route('/',methods=['GET','POST'])
 def show_todo_list():
-    if not session['logged_in']:
+    if not session.has_key('logged_in') or session['logged_in']==False:
         return redirect(url_for('main.login',title=u'登录页'))
     if request.method=='GET':
         with g.db as cur:
@@ -51,8 +52,31 @@ def show_todo_list():
             sql='''insert into todolist (`user_id`, `title`, `status`, `create_time`) VALUES''' \
                 ''' ({user_id},"{title}","{status}",{create_time});'''.format(user_id=1,title=title,status=status,create_time=int(time.time()))
             cur.execute(sql)
-            current_app.logger.info(sql)
+            current_app.logger.debug(sql)
+            flash(u'记录新增成功！')
             return redirect(url_for('main.show_todo_list'))
+
+@main.route("/delete",methods=['GET'])
+def delete():
+    id=request.args.get("id",None)
+    if id is None:
+        abort(404)
+    else:
+        with g.db as cur:
+            sql='''delete from todolist where id={};'''.format(id)
+            cur.execute(sql)
+            current_app.logger.debug(sql)
+            flash(u"任务删除成功！")
+            return redirect(url_for('main.show_todo_list'))
+
+@main.route('/modify',methods=['GET'])
+def modify():
+    id=request.args.get('id',None)
+    if id is None:
+        abort(404)
+    else:
+        return redirect(url_for('main.show_todo_list'))
+
 
 
 @main.route("/login",methods=['POST','GET'])
@@ -60,6 +84,7 @@ def login():
     if request.method=="POST":
         if str(request.form['user'])=="admin" and str(request.form['pwd'])=="admin":
             session['logged_in']=True
+            current_app.logger.info(u"用户 admin 在{} 登录成功！".format(datetime.now().strftime("%Y/%m/%d-%H:%M:%S")))
             flash(u"登录成功！")
             return redirect(url_for("main.show_todo_list",title=u"首页"))
         else:

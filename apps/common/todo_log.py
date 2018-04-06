@@ -9,3 +9,4 @@ class RecordLog():
         handler = logging.FileHandler(app.config['LOG_FILE'])
         app.logger.addHandler(handler)
 
+
