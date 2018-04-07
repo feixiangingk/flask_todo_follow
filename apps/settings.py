@@ -25,8 +25,8 @@ DATABASE_NAME = 'test'
 # sqlalchemy  数据库引擎
 SQLALCHEMY_DATABASE_URI = 'mysql://' + DATABASE_USER + ':' + DATABASE_PWD + '@' + \
                           DATABASE_HOST + ':' + str(DATABASE_PORT) + '/' + DATABASE_NAME + '?charset=utf8'
-SQLALCHEMY_ECHO = False
+SQLALCHEMY_ECHO = False #打印实际SQL语句
 SQLALCHEMY_POOL_RECYCLE = 3600
-SQLALCHEMY_TRACK_MODIFICATIONS = False
+SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 del os

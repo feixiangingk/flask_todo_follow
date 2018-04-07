@@ -4,13 +4,17 @@
 # software:     PyCharm
 
 from __future__ import unicode_literals
-import time
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
 from datetime import datetime
 import pymysql
 from .import main
 from flask import render_template,g,url_for,redirect,request,session,flash,abort
 from forms import TodoListForm
 from flask import current_app
+from models import TodoList,db
+
 
 
 def connect_db():
@@ -40,23 +44,30 @@ def show_todo_list():
 
     todoListform=TodoListForm()
     if request.method=='GET':
-        with g.db as cur:
-            sql="select * from todolist;"
-            cur.execute(sql)
-            todo_list = [dict(id=row[0], user_id=row[1], title=row[2], status=row[3], create_time=row[4]) for row in
-                         cur.fetchall()]
-            return render_template("index_follow.html", todo_list=todo_list,form=todoListform, title=u"首页")
+        todolists=TodoList.query.all()
+        # with g.db as cur:
+        #     sql="select * from todolist;"
+        #     cur.execute(sql)
+        #     todolists = [dict(id=row[0], user_id=row[1], title=row[2], status=row[3], create_time=row[4]) for row in
+        #                  cur.fetchall()]
+        return render_template("index_follow.html", todo_list=todolists,form=todoListform, title=u"首页")
 
     elif request.method=='POST':
         if todoListform.validate_on_submit():
-            title=request.form['title']
-            status=request.form['status']
-            with g.db as cur:
-                sql='''insert into todolist (`user_id`, `title`, `status`, `create_time`) VALUES''' \
-                    ''' ({user_id},"{title}","{status}",{create_time});'''.format(user_id=1,title=title,status=status,create_time=int(time.time()))
-                cur.execute(sql)
-                current_app.logger.debug(sql)
-                flash('记录新增成功！')
+            todolist=TodoList(user_id=1,title=todoListform.title.data,status=todoListform.status.data)
+            db.session.add(todolist)
+            db.session.commit()
+
+            # title=request.form['title']
+            # status=request.form['status']
+            # db.session.commit()
+            # with g.db as cur:
+            #     sql='''insert into todolist (`user_id`, `title`, `status`, `create_time`) VALUES''' \
+            #         ''' ({user_id},"{title}","{status}",{create_time});'''.format(user_id=1,title=title,status=status,create_time=int(time.time()))
+            #     cur.execute(sql)
+            # current_app.logger.debug(sql)
+
+            flash('记录新增成功！')
         else:
             flash(todoListform.errors)
         return redirect(url_for('main.show_todo_list'))
@@ -67,12 +78,15 @@ def delete():
     if id is None:
         abort(404)
     else:
-        with g.db as cur:
-            sql='''delete from todolist where id={};'''.format(id)
-            cur.execute(sql)
-            current_app.logger.debug(sql)
-            flash(u"任务删除成功！")
-            return redirect(url_for('main.show_todo_list'))
+        # with g.db as cur:
+        #     sql='''delete from todolist where id={};'''.format(id)
+        #     cur.execute(sql)
+        #     current_app.logger.debug(sql)
+        todolist=TodoList.query.filter_by(id=id).first_or_404()
+        db.session.delete(todolist)
+        db.session.commit()
+        flash(u"任务删除成功！")
+        return redirect(url_for('main.show_todo_list'))
 
 @main.route('/modify',methods=['GET'])
 def modify():
