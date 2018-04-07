@@ -72,21 +72,18 @@ def show_todo_list():
             flash(todoListform.errors)
         return redirect(url_for('main.show_todo_list'))
 
-@main.route("/delete",methods=['GET'])
-def delete():
-    id=request.args.get("id",None)
-    if id is None:
-        abort(404)
-    else:
-        # with g.db as cur:
-        #     sql='''delete from todolist where id={};'''.format(id)
-        #     cur.execute(sql)
-        #     current_app.logger.debug(sql)
-        todolist=TodoList.query.filter_by(id=id).first_or_404()
-        db.session.delete(todolist)
-        db.session.commit()
-        flash(u"任务删除成功！")
-        return redirect(url_for('main.show_todo_list'))
+@main.route("/delete/<int:id>",methods=['GET'])
+def delete(id):
+    """
+    resful风格
+    :param id:
+    :return:
+    """
+    todolist=TodoList.query.filter_by(id=id).first_or_404()
+    db.session.delete(todolist)
+    db.session.commit()
+    flash(u"任务删除成功！")
+    return redirect(url_for('main.show_todo_list'))
 
 @main.route('/modify',methods=['GET'])
 def modify():
